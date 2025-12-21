@@ -1,0 +1,2523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Hantak FP Arcade — Attempts, Challenge Gate, Levels & Prizes</title>
+
+  <style>
+    :root{
+      --bg0:#070810;
+      --bg1:#0f1730;
+      --bg2:#111827;
+
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --line: rgba(255,255,255,.12);
+
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+
+      --coinSize: 92px;
+      --ease: cubic-bezier(.2,.8,.2,1);
+      --spinMs: 980ms;
+
+      --accentA: rgba(95, 227, 255, .85);
+      --accentB: rgba(255, 120, 220, .78);
+      --accentC: rgba(255, 210, 120, .85);
+
+      --good: rgba(120,255,170,.92);
+      --bad: rgba(255,120,140,.92);
+      --warn: rgba(255,210,120,.92);
+
+      --glow: 0 0 24px rgba(95,227,255,.18), 0 0 60px rgba(255,120,220,.10);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(255,120,220,.14), transparent 60%),
+        radial-gradient(1100px 650px at 90% 30%, rgba(95,227,255,.14), transparent 60%),
+        radial-gradient(900px 500px at 50% 100%, rgba(255,210,120,.10), transparent 70%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      display:flex;
+      justify-content:center;
+      padding: 18px;
+      overflow-x:hidden;
+    }
+
+    /* Animated aura layer */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: -80px;
+      background:
+        radial-gradient(700px 420px at 20% 20%, rgba(95,227,255,.14), transparent 60%),
+        radial-gradient(800px 460px at 80% 25%, rgba(255,120,220,.12), transparent 65%),
+        radial-gradient(900px 520px at 55% 95%, rgba(255,210,120,.10), transparent 70%);
+      filter: blur(22px);
+      opacity: .85;
+      animation: auraMove 12s var(--ease) infinite alternate;
+      pointer-events:none;
+      z-index:0;
+    }
+    @keyframes auraMove{
+      0%{ transform: translate3d(-10px, -10px, 0) scale(1.02); }
+      100%{ transform: translate3d(12px, 10px, 0) scale(1.05); }
+    }
+
+    /* Full-screen FX canvas */
+    #fx{
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events:none;
+      z-index: 1;
+    }
+
+    /* Screen flash overlay */
+    #flash{
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(520px 380px at 50% 45%, rgba(255,255,255,.18), transparent 70%),
+        radial-gradient(900px 600px at 50% 55%, rgba(95,227,255,.12), transparent 72%);
+      opacity: 0;
+      pointer-events:none;
+      z-index: 90;
+    }
+    #flash.play{
+      animation: flash 520ms var(--ease) both;
+    }
+    @keyframes flash{
+      0%{ opacity: 0; }
+      18%{ opacity: 1; }
+      100%{ opacity: 0; }
+    }
+
+    .app{
+      width: min(1220px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      z-index: 2;
+    }
+
+    header{
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      position: relative;
+      overflow:hidden;
+    }
+    header::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(520px 220px at 15% 30%, rgba(95,227,255,.16), transparent 62%),
+        radial-gradient(520px 260px at 85% 40%, rgba(255,120,220,.14), transparent 62%);
+      opacity:.7;
+      filter: blur(8px);
+      pointer-events:none;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      position:relative;
+      z-index:1;
+    }
+    .title h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    .title p{
+      margin:0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .topRight{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      position:relative;
+      z-index:1;
+    }
+
+    .pill{
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset, var(--glow);
+      color: rgba(255,255,255,.82);
+      white-space:nowrap;
+    }
+
+    button{
+      font: inherit;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.07);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+      transition: transform 120ms var(--ease), background 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease);
+      user-select:none;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset;
+    }
+    button:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.22);
+      box-shadow: var(--glow);
+    }
+    button:active{ transform: translateY(0px) scale(.99); }
+    button[disabled]{ opacity:.55; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    .primary{
+      background: linear-gradient(180deg, rgba(95,227,255,.22), rgba(255,120,220,.10));
+      border-color: rgba(95,227,255,.26);
+      font-weight: 850;
+      letter-spacing:.08em;
+      text-transform: uppercase;
+      box-shadow: var(--glow);
+    }
+
+    main{
+      display:grid;
+      grid-template-columns: 340px 1fr 340px;
+      gap:14px;
+    }
+
+    .panel, .center{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height: 620px;
+      position: relative;
+      overflow:hidden;
+    }
+    .panel::before, .center::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(520px 240px at 10% 10%, rgba(95,227,255,.10), transparent 60%),
+        radial-gradient(520px 260px at 90% 20%, rgba(255,120,220,.08), transparent 62%);
+      opacity:.55;
+      filter: blur(10px);
+      pointer-events:none;
+    }
+
+    .panel h2{
+      margin: 2px 0 0 0;
+      font-size: 13px;
+      letter-spacing:.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.82);
+      position:relative;
+      z-index:1;
+    }
+
+    .card{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      border-radius: 16px;
+      padding: 12px;
+      position:relative;
+      z-index:1;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      position:relative;
+      z-index:1;
+    }
+    .row label{ color: var(--muted); font-size: 13px; }
+
+    .segmented{ display:flex; gap:8px; }
+    .segmented button{
+      min-width: 96px;
+      font-weight: 850;
+      letter-spacing:.04em;
+      border-radius: 999px;
+      padding: 10px 12px;
+    }
+    .segmented button.active{
+      background: linear-gradient(180deg, rgba(95,227,255,.20), rgba(255,120,220,.08));
+      border-color: rgba(255,255,255,.24);
+      box-shadow: var(--glow);
+    }
+
+    /* Attempts hearts */
+    .hearts{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    .heart{
+      width: 14px;
+      height: 14px;
+      transform: rotate(45deg);
+      position: relative;
+      background: rgba(255,255,255,.16);
+      border-radius: 3px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset;
+      opacity: .5;
+    }
+    .heart::before, .heart::after{
+      content:"";
+      width: 14px;
+      height: 14px;
+      background: inherit;
+      position:absolute;
+      border-radius: 50%;
+      top: -7px;
+      left: 0;
+    }
+    .heart::after{
+      left: -7px;
+      top: 0;
+    }
+    .heart.filled{
+      background: rgba(255,120,140,.88);
+      opacity: 1;
+      box-shadow: 0 0 22px rgba(255,120,140,.22), 0 0 0 1px rgba(255,255,255,.10) inset;
+      animation: throb 1.2s var(--ease) infinite;
+    }
+    @keyframes throb{
+      0%,100%{ transform: rotate(45deg) scale(1); }
+      50%{ transform: rotate(45deg) scale(1.15); }
+    }
+
+    .statGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .stat{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+    }
+    .stat .k{
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing:.10em;
+      text-transform: uppercase;
+    }
+    .stat .v{
+      margin-top: 4px;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing:.03em;
+    }
+
+    .miniTagRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .tag{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      color: rgba(255,255,255,.84);
+      font-size: 12px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .tag b{ font-weight: 900; }
+
+    .toast{
+      margin-top:auto;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.78);
+      font-size: 12.5px;
+      min-height: 40px;
+      position:relative;
+      z-index:1;
+    }
+
+    /* -------- Center Scene -------- */
+    .sceneWrap{
+      flex:1;
+      position:relative;
+      overflow:hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(900px 420px at 50% 12%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.22));
+      touch-action: none;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset, var(--glow);
+      position:relative;
+      z-index:1;
+    }
+    .sceneWrap.shake{
+      animation: shake 420ms var(--ease) both;
+    }
+    @keyframes shake{
+      0%{ transform: translate3d(0,0,0); }
+      20%{ transform: translate3d(-8px,2px,0) rotate(-.2deg); }
+      45%{ transform: translate3d(7px,-2px,0) rotate(.25deg); }
+      70%{ transform: translate3d(-4px,1px,0) rotate(-.12deg); }
+      100%{ transform: translate3d(0,0,0); }
+    }
+
+    .scene{
+      position:absolute;
+      inset:0;
+      perspective: 950px;
+    }
+    .ground{
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(980px 380px at 50% 70%, rgba(0,0,0,.35), transparent 72%),
+        radial-gradient(740px 320px at 55% 70%, rgba(255,255,255,.05), transparent 60%);
+      opacity:.92;
+    }
+
+    .stoneZone{
+      position:absolute;
+      left:50%;
+      top: 26%;
+      transform: translate(-50%, -50%);
+      width: min(470px, 82%);
+      aspect-ratio: 1;
+      display:grid;
+      place-items:center;
+      pointer-events:none;
+    }
+
+    .stoneStack{
+      width:100%;
+      height:100%;
+      position:relative;
+      display:grid;
+      place-items:center;
+      transform-style: preserve-3d;
+    }
+
+    .stone{
+      width:100%;
+      height:100%;
+      border-radius: 999px;
+      transform: rotateX(68deg);
+      transform-style: preserve-3d;
+      border: 2px solid rgba(255,255,255,.14);
+      box-shadow:
+        inset 0 18px 40px rgba(255,255,255,.06),
+        inset 0 -22px 50px rgba(0,0,0,.48),
+        0 24px 76px rgba(0,0,0,.62);
+      background:
+        radial-gradient(circle at 20% 28%, rgba(255,255,255,.08) 0 52px, transparent 53px),
+        radial-gradient(circle at 76% 58%, rgba(0,0,0,.22) 0 74px, transparent 75px),
+        radial-gradient(circle at 45% 84%, rgba(255,255,255,.05) 0 40px, transparent 41px),
+        radial-gradient(circle at 52% 48%, #2b2f36 0%, #1f232a 55%, #14161b 100%);
+      position:relative;
+      overflow:hidden;
+    }
+    .stone::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(120deg, transparent 0%, rgba(95,227,255,.06) 30%, rgba(255,120,220,.04) 55%, transparent 75%);
+      opacity:.35;
+      transform: translateX(-70%);
+      animation: stoneSweep 3.2s var(--ease) infinite;
+      mix-blend-mode: screen;
+    }
+    @keyframes stoneSweep{
+      0%{ transform: translateX(-70%); }
+      100%{ transform: translateX(70%); }
+    }
+    .stone::after{
+      content:"antugan";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%);
+      color: rgba(255,255,255,.14);
+      letter-spacing:.28em;
+      text-transform: uppercase;
+      font-size: 12px;
+      user-select:none;
+      pointer-events:none;
+    }
+
+    /* Rings overlay (neon) */
+    .rings{
+      position:absolute;
+      inset:0;
+      transform: rotateX(68deg);
+      border-radius: 999px;
+      pointer-events:none;
+    }
+    .ring{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%);
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 0 30px rgba(95,227,255,.08);
+      animation: ringPulse 2.4s var(--ease) infinite;
+    }
+    .ring.r1{ width: 32%; height: 32%; border-color: rgba(255,210,120,.20); box-shadow: 0 0 24px rgba(255,210,120,.10); }
+    .ring.r2{ width: 64%; height: 64%; border-color: rgba(95,227,255,.14); }
+    .ring.r3{ width: 92%; height: 92%; border-color: rgba(255,120,220,.12); }
+    @keyframes ringPulse{
+      0%,100%{ opacity: .70; }
+      50%{ opacity: 1; }
+    }
+
+    .player{
+      position:absolute;
+      left:50%;
+      bottom:-10px;
+      transform: translateX(-50%);
+      width: min(520px, 95%);
+      height: 160px;
+      pointer-events:none;
+      opacity:.97;
+    }
+    .player::before{
+      content:"";
+      position:absolute;
+      left: 8%;
+      right: 8%;
+      bottom: 0;
+      height: 140px;
+      border-radius: 26px 26px 0 0;
+      background:
+        radial-gradient(220px 120px at 30% 55%, rgba(0,0,0,.38), transparent 70%),
+        radial-gradient(220px 120px at 70% 55%, rgba(0,0,0,.38), transparent 70%),
+        linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.40));
+      filter: blur(.2px);
+    }
+    .playerLabel{
+      position:absolute;
+      left:50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,.60);
+      font-size: 12px;
+      letter-spacing:.18em;
+      text-transform: uppercase;
+      user-select:none;
+    }
+    .hand{
+      position:absolute;
+      left:50%;
+      bottom: 42px;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 70px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 22px 40px rgba(0,0,0,.42);
+      opacity:.80;
+      will-change: transform;
+    }
+    .hand.throwing{
+      animation: handPush 260ms var(--ease) both;
+    }
+    @keyframes handPush{
+      0%{ transform: translateX(-50%) translateY(0); }
+      100%{ transform: translateX(-50%) translateY(-18px); }
+    }
+
+    /* Aim UI */
+    .reticle{
+      position:absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.55);
+      box-shadow: 0 0 0 7px rgba(95,227,255,.10), 0 0 26px rgba(255,120,220,.12);
+      transform: translate(-50%, -50%);
+      pointer-events:none;
+      opacity: 0;
+      transition: opacity 120ms var(--ease);
+      z-index:2;
+    }
+    .reticle.show{ opacity: 1; }
+
+    .aimLine{
+      position:absolute;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(95,227,255,.18), rgba(255,120,220,.14));
+      transform-origin: left center;
+      pointer-events:none;
+      opacity: 0;
+      transition: opacity 120ms var(--ease);
+      z-index:2;
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,.35));
+    }
+    .aimLine.show{ opacity: 1; }
+
+    /* Coins layer */
+    .coinsLayer{ position:absolute; inset:0; pointer-events:none; }
+    .coinWrap{
+      position:absolute;
+      width: var(--coinSize);
+      height: var(--coinSize);
+      left:0; top:0;
+      will-change: transform;
+      filter: drop-shadow(0 18px 20px rgba(0,0,0,.55));
+      z-index:3;
+    }
+
+    .coin{
+      width:100%; height:100%;
+      position: relative;
+      border-radius: 999px;
+      transform-style: preserve-3d;
+      transform: rotateY(var(--rot, 0deg));
+      will-change: transform;
+    }
+    .coin.spinning{
+      animation: flip var(--spinMs) var(--ease) both;
+      animation-delay: var(--delay, 0ms);
+    }
+    @keyframes flip{
+      0%{ transform: rotateY(0deg) rotateZ(0deg); }
+      35%{ transform: rotateY(calc(var(--rot, 720deg) - 360deg)) rotateZ(12deg); }
+      100%{ transform: rotateY(var(--rot, 720deg)) rotateZ(0deg); }
+    }
+
+    /* Coin rim thickness illusion */
+    .coin::after{
+      content:"";
+      position:absolute;
+      inset: 3px;
+      border-radius: 999px;
+      border: 6px solid rgba(255,255,255,.08);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.06),
+        inset 0 0 18px rgba(0,0,0,.25);
+      transform: translateZ(2px);
+      opacity:.85;
+      pointer-events:none;
+    }
+
+    .face{
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      backface-visibility:hidden;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
+    .face::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,.30), transparent 48%),
+        radial-gradient(circle at 52% 65%, rgba(0,0,0,.24), transparent 62%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.10), rgba(0,0,0,.26) 62%, rgba(0,0,0,.38) 100%);
+    }
+    .face::after{
+      content:"";
+      position:absolute;
+      inset: 7px;
+      border-radius:999px;
+      border: 2px solid rgba(255,255,255,.14);
+      box-shadow: inset 0 0 0 9px rgba(0,0,0,.12);
+    }
+
+    /* Shine sweep */
+    .face .shine{
+      position:absolute;
+      inset:-20%;
+      background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,.18) 50%, transparent 60%);
+      transform: translateX(-60%) rotate(8deg);
+      animation: shine 1.8s var(--ease) infinite;
+      opacity:.35;
+      mix-blend-mode: screen;
+    }
+    @keyframes shine{
+      0%{ transform: translateX(-60%) rotate(8deg); }
+      100%{ transform: translateX(60%) rotate(8deg); }
+    }
+
+    .heads{ transform: translateZ(7px); }
+    .tails{ transform: rotateY(180deg) translateZ(7px); }
+
+    svg{
+      width: 72%;
+      height: 72%;
+      z-index: 2;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+    }
+    .engrave{
+      fill: rgba(10,12,16,.70);
+      stroke: rgba(255,255,255,.12);
+      stroke-width: 1.4;
+    }
+
+    .readout{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+      position:relative;
+      z-index:1;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+    }
+    .msg{ font-size: 14px; line-height: 1.25; color: rgba(255,255,255,.90); }
+    .submsg{ margin-top: 6px; font-size: 13px; color: var(--muted); }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:1;
+    }
+
+    /* Ladder */
+    .ladder{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      position:relative;
+      z-index:1;
+    }
+    .ladderItem{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+    }
+    .ladderItem .left{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:0;
+    }
+    .ladderItem .lvl{
+      font-size: 12px;
+      letter-spacing:.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.70);
+    }
+    .ladderItem .name{
+      font-size: 13px;
+      font-weight: 900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .ladderItem .right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .badge{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+    }
+    .ladderItem.current{
+      border-color: rgba(95,227,255,.26);
+      box-shadow: 0 0 0 1px rgba(95,227,255,.12) inset, var(--glow);
+      background: linear-gradient(180deg, rgba(95,227,255,.12), rgba(0,0,0,.16));
+    }
+    .ladderItem.secured{
+      border-color: rgba(120,255,170,.22);
+      box-shadow: 0 0 0 1px rgba(120,255,170,.10) inset, 0 0 26px rgba(120,255,170,.12);
+      background: linear-gradient(180deg, rgba(120,255,170,.10), rgba(0,0,0,.16));
+    }
+
+    /* Toggles */
+    .toggleRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .toggleRow span{ color: var(--muted); font-size: 13px; }
+    .switch{
+      width: 46px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.20);
+      position:relative;
+      cursor:pointer;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+    }
+    .switch::after{
+      content:"";
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      position:absolute;
+      top:50%;
+      left: 4px;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,.70);
+      transition: left 140ms var(--ease), background 140ms var(--ease);
+      box-shadow: 0 10px 18px rgba(0,0,0,.35);
+    }
+    .switch.on{
+      border-color: rgba(95,227,255,.26);
+      box-shadow: var(--glow);
+      background: rgba(95,227,255,.10);
+    }
+    .switch.on::after{
+      left: 22px;
+      background: rgba(120,255,170,.85);
+    }
+
+    /* Overlays */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,.62);
+      z-index: 100;
+    }
+    .overlay.show{ display:flex; }
+
+    .modal{
+      width: min(980px, 100%);
+      max-height: min(92vh, 860px);
+      overflow:auto;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(16, 20, 34, .92);
+      box-shadow: 0 30px 110px rgba(0,0,0,.62);
+      backdrop-filter: blur(14px);
+      padding: 16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+    }
+    .modalHeader{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .modalHeader h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.12em;
+      text-transform: uppercase;
+    }
+    .modalHeader p{
+      margin:6px 0 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .modalActions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    /* Wizard step display */
+    .wizardStep{ display:none; }
+    .wizardStep.show{ display:block; }
+    .wizardDots{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      margin-top: 8px;
+    }
+    .dot{
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      opacity:.6;
+    }
+    .dot.on{
+      opacity: 1;
+      background: rgba(95,227,255,.40);
+      box-shadow: 0 0 18px rgba(95,227,255,.18);
+      border-color: rgba(95,227,255,.30);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .note{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    /* Responsive */
+    @media (max-width: 1080px){
+      main{ grid-template-columns: 1fr; }
+      .panel, .center{ min-height: unset; }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="fx"></canvas>
+  <div id="flash"></div>
+
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>HANTAK FP ARCADE</h1>
+        <p>3 attempts per level · Challenge Gate to continue · Level-up prizes · Drag-to-aim throw · Big FX</p>
+      </div>
+      <div class="topRight">
+        <div class="pill" id="phasePill">Phase: Menu</div>
+        <div class="pill" id="modePill">Mode: —</div>
+        <div class="pill" id="turnPill">Turn: —</div>
+        <button id="menuBtn" type="button">Instructions</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT PANEL -->
+      <section class="panel" aria-label="Player panel">
+        <h2>Player</h2>
+
+        <div class="card">
+          <div class="row">
+            <label>Active</label>
+            <div class="badge" id="activeName">—</div>
+          </div>
+
+          <div class="statGrid">
+            <div class="stat">
+              <div class="k">Level</div>
+              <div class="v" id="levelText">—</div>
+            </div>
+            <div class="stat">
+              <div class="k">Streak</div>
+              <div class="v" id="streakText">—</div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px; color:var(--muted); font-size:13px;">
+            Attempts (this level)
+            <div class="hearts" id="hearts"></div>
+          </div>
+
+          <div class="miniTagRow">
+            <div class="tag" id="securedTag">🔒 <b>Secured:</b> <span id="securedPrize">None</span></div>
+            <div class="tag" id="nextTag">🎁 <b>Next:</b> <span id="nextPreview">—</span></div>
+          </div>
+
+          <div style="margin-top:12px;" class="row">
+            <label>Call</label>
+            <div class="segmented" role="group">
+              <button id="betHeads" class="active" type="button">HEADS</button>
+              <button id="betTails" type="button">TAILS</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="cashoutBtn" type="button">Stop & Claim</button>
+            <button id="resetBtn" type="button">Reset</button>
+          </div>
+
+          <div class="toast" id="toast" aria-live="polite">
+            Start the tutorial, then the free trial.
+          </div>
+        </div>
+      </section>
+
+      <!-- CENTER -->
+      <section class="center" aria-label="Play area">
+        <div class="sceneWrap" id="sceneWrap">
+          <div class="scene">
+            <div class="ground"></div>
+
+            <div class="stoneZone" id="stoneZone">
+              <div class="stoneStack">
+                <div class="stone"></div>
+                <div class="rings">
+                  <div class="ring r1"></div>
+                  <div class="ring r2"></div>
+                  <div class="ring r3"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="coinsLayer" id="coinsLayer">
+              <div class="reticle" id="reticle"></div>
+              <div class="aimLine" id="aimLine"></div>
+
+              <div class="coinWrap" id="wrap0">
+                <div class="coin" id="coin0" style="--rot:0deg;">
+                  <div class="face heads">
+                    <div class="shine"></div>
+                    <svg viewBox="0 0 100 100" role="img" aria-label="Heads">
+                      <circle class="engrave" cx="50" cy="50" r="40" fill="none"></circle>
+                      <path class="engrave" d="M52 30c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14z"/>
+                      <path class="engrave" d="M26 78c6-16 18-24 28-24s22 8 28 24" fill="none"/>
+                    </svg>
+                  </div>
+                  <div class="face tails">
+                    <div class="shine"></div>
+                    <svg viewBox="0 0 100 100" role="img" aria-label="Tails">
+                      <circle class="engrave" cx="50" cy="50" r="40" fill="none"></circle>
+                      <path class="engrave" d="M50 26l7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z"/>
+                      <path class="engrave" d="M34 70c4 6 10 10 16 10s12-4 16-10" fill="none" opacity=".8"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="coinWrap" id="wrap1">
+                <div class="coin" id="coin1" style="--rot:0deg;">
+                  <div class="face heads">
+                    <div class="shine"></div>
+                    <svg viewBox="0 0 100 100" role="img" aria-label="Heads">
+                      <circle class="engrave" cx="50" cy="50" r="40" fill="none"></circle>
+                      <path class="engrave" d="M52 30c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14z"/>
+                      <path class="engrave" d="M26 78c6-16 18-24 28-24s22 8 28 24" fill="none"/>
+                    </svg>
+                  </div>
+                  <div class="face tails">
+                    <div class="shine"></div>
+                    <svg viewBox="0 0 100 100" role="img" aria-label="Tails">
+                      <circle class="engrave" cx="50" cy="50" r="40" fill="none"></circle>
+                      <path class="engrave" d="M50 26l7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z"/>
+                      <path class="engrave" d="M34 70c4 6 10 10 16 10s12-4 16-10" fill="none" opacity=".8"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="coinWrap" id="wrap2">
+                <div class="coin" id="coin2" style="--rot:0deg;">
+                  <div class="face heads">
+                    <div class="shine"></div>
+                    <svg viewBox="0 0 100 100" role="img" aria-label="Heads">
+                      <circle class="engrave" cx="50" cy="50" r="40" fill="none"></circle>
+                      <path class="engrave" d="M52 30c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14z"/>
+                      <path class="engrave" d="M26 78c6-16 18-24 28-24s22 8 28 24" fill="none"/>
+                    </svg>
+                  </div>
+                  <div class="face tails">
+                    <div class="shine"></div>
+                    <svg viewBox="0 0 100 100" role="img" aria-label="Tails">
+                      <circle class="engrave" cx="50" cy="50" r="40" fill="none"></circle>
+                      <path class="engrave" d="M50 26l7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z"/>
+                      <path class="engrave" d="M34 70c4 6 10 10 16 10s12-4 16-10" fill="none" opacity=".8"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="player" aria-hidden="true">
+              <div class="hand" id="hand"></div>
+              <div class="playerLabel" id="playerLabel">Player</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="readout">
+          <div class="msg" id="msg">Open Instructions to begin the step-by-step tutorial.</div>
+          <div class="submsg" id="submsg">Drag in the scene to aim. Release to toss.</div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="tossBtn" type="button" disabled>TOSS</button>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL -->
+      <section class="panel" aria-label="Ladder panel">
+        <h2>Prize Ladder</h2>
+
+        <div class="card">
+          <div class="toggleRow">
+            <span>Sound FX</span>
+            <div class="switch" id="soundSwitch" role="switch" aria-checked="false"></div>
+          </div>
+          <div class="toggleRow" style="margin-top:10px;">
+            <span>Extra Particles</span>
+            <div class="switch on" id="fxSwitch" role="switch" aria-checked="true"></div>
+          </div>
+          <div class="note" style="margin-top:10px;">
+            <b>Note:</b> Prizes shown are <b>demo examples</b> (arcade-style rewards). You can replace them with your own prize list.
+          </div>
+        </div>
+
+        <div class="ladder" id="ladder"></div>
+
+        <div class="toast" id="hint">
+          Difficulty increases every level: accuracy requirements + more scatter.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- WIZARD OVERLAY -->
+  <div class="overlay show" id="wizardOverlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modalHeader">
+        <div>
+          <h2 id="wTitle">Tutorial</h2>
+          <p id="wSubtitle">Step-by-step instructions. Click “Agree & Next”.</p>
+          <div class="wizardDots" id="wDots"></div>
+        </div>
+        <button id="wClose" type="button">Close</button>
+      </div>
+
+      <!-- Step 0 -->
+      <div class="wizardStep show" data-step="0">
+        <div class="note">
+          Welcome to <b>Hantak FP Arcade</b> — a first-person coin toss onto the circular stone.
+          <br/><br/>
+          <b>Your twist:</b> you get <b>3 attempts per level</b>. Each win levels you up with a bigger prize.
+          Lose all attempts and you must choose: <b>Stop & Claim</b> or <b>Pass a Challenge Gate</b> to continue.
+        </div>
+        <div class="note">
+          <b>Fairness:</b> Heads/Tails faces are RNG (fair), while landing accuracy is influenced by your aim.
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="wizardStep" data-step="1">
+        <div class="grid2">
+          <div class="card">
+            <h2 style="margin:0 0 8px 0; font-size:13px;">Mode</h2>
+            <div class="segmented" role="group">
+              <button id="modeSingle" class="active" type="button">Single</button>
+              <button id="modeMulti" type="button">Multiplayer</button>
+            </div>
+            <div class="note" style="margin-top:10px;">
+              <b>Single:</b> one player climbs the ladder.<br/>
+              <b>Multiplayer:</b> 2 players take turns (hot-seat).
+            </div>
+          </div>
+          <div class="card">
+            <h2 style="margin:0 0 8px 0; font-size:13px;">Names</h2>
+            <div class="row"><label>Player 1</label><input id="p1Name" type="text" value="Player 1"/></div>
+            <div class="row" style="margin-top:10px;"><label>Player 2</label><input id="p2Name" type="text" value="Player 2"/></div>
+            <div class="note" style="margin-top:10px;">Player 2 is used only in Multiplayer.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="wizardStep" data-step="2">
+        <div class="note">
+          <b>How to throw (skill):</b><br/>
+          1) Drag in the scene to aim toward the stone<br/>
+          2) Longer drag = more power (but too much becomes harder to control)<br/>
+          3) Release to toss
+        </div>
+        <div class="note">
+          <b>Rings:</b> Bullseye (small) → Inner → Outer. Higher levels require better landings.
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="wizardStep" data-step="3">
+        <div class="note">
+          <b>Attempts:</b> Each level gives you <b>3 tries</b> to win with your Heads/Tails call.<br/><br/>
+          If you lose all attempts:
+          <ul style="margin:6px 0 0 18px;">
+            <li><b>Stop & Claim:</b> keep your secured prize</li>
+            <li><b>Continue:</b> you must complete a <b>Challenge Gate</b> first</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="wizardStep" data-step="4">
+        <div class="note">
+          <b>Leveling & prizes:</b> Win a level → your reward tier increases.<br/>
+          Prizes can vary (example: plush toys, gadgets, vouchers).
+          Your “secured prize” is what you keep if you stop.
+        </div>
+        <div class="note">
+          <b>Difficulty scaling:</b> Each level adds stricter landing requirements and more scatter.
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="wizardStep" data-step="5">
+        <div class="note">
+          <b>Free Trial:</b> Before the real run, you’ll get a short trial (no prizes) to learn aiming.
+        </div>
+        <div class="note">
+          After trial ends, the real ladder begins at Level 1 with 3 attempts.
+        </div>
+      </div>
+
+      <div class="modalActions">
+        <button id="wBack" type="button">Back</button>
+        <button id="wNext" class="primary" type="button">Agree & Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIAL DONE -->
+  <div class="overlay" id="trialDoneOverlay" aria-modal="true" role="dialog">
+    <div class="modal" style="width:min(680px, 100%);">
+      <div class="modalHeader">
+        <div>
+          <h2>Trial Complete</h2>
+          <p>Ready to start the real ladder run?</p>
+        </div>
+      </div>
+      <div class="note">
+        Real game rules: 3 attempts per level. Out of attempts → Stop & Claim or Challenge Gate.
+      </div>
+      <div class="modalActions">
+        <button id="startRealBtn" class="primary" type="button">Start Real Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUT OF ATTEMPTS -->
+  <div class="overlay" id="gateOverlay" aria-modal="true" role="dialog">
+    <div class="modal" style="width:min(760px, 100%);">
+      <div class="modalHeader">
+        <div>
+          <h2 id="gateTitle">Out of attempts</h2>
+          <p id="gateSubtitle">Choose to stop or continue.</p>
+        </div>
+      </div>
+
+      <div class="note" id="gateNote"></div>
+      <div class="note" id="challengeNote"></div>
+
+      <div class="modalActions">
+        <button id="stopBtn" type="button">Stop & Claim</button>
+        <button id="continueBtn" class="primary" type="button">Continue (Challenge Gate)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL UP -->
+  <div class="overlay" id="levelOverlay" aria-modal="true" role="dialog">
+    <div class="modal" style="width:min(760px, 100%);">
+      <div class="modalHeader">
+        <div>
+          <h2 id="lvlTitle">Level Up!</h2>
+          <p id="lvlSubtitle">You secured a reward.</p>
+        </div>
+      </div>
+      <div class="note" id="lvlNote"></div>
+      <div class="modalActions">
+        <button id="lvlContinue" class="primary" type="button">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASH OUT -->
+  <div class="overlay" id="cashoutOverlay" aria-modal="true" role="dialog">
+    <div class="modal" style="width:min(760px, 100%);">
+      <div class="modalHeader">
+        <div>
+          <h2>Claimed</h2>
+          <p id="cashoutSubtitle">You stopped and claimed your secured prize.</p>
+        </div>
+      </div>
+      <div class="note" id="cashoutNote"></div>
+      <div class="modalActions">
+        <button id="cashoutRestart" class="primary" type="button">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------
+    // RNG helpers
+    // -----------------------------
+    function randUint32(){
+      if (window.crypto && crypto.getRandomValues){
+        const a = new Uint32Array(1);
+        crypto.getRandomValues(a);
+        return a[0];
+      }
+      return Math.floor(Math.random() * 2**32);
+    }
+    function randBit(){ return (randUint32() & 1); } // 0=heads,1=tails
+    function randInt(min, maxInclusive){
+      const span = (maxInclusive - min + 1) >>> 0;
+      return min + (randUint32() % span);
+    }
+    function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+
+    // -----------------------------
+    // Prize tiers (DEMO EXAMPLES)
+    // Replace with your own list.
+    // -----------------------------
+    const PRIZE_TIERS = [
+      { tierName:"Starter", options:[
+        {emoji:"✨", name:"Sticker Pack"},
+        {emoji:"🧿", name:"Lucky Charm"},
+        {emoji:"🎫", name:"Arcade Ticket Bundle"},
+        {emoji:"📛", name:"Badge Pin"},
+        {emoji:"🪙", name:"Collector Coin"},
+      ]},
+      { tierName:"Fun", options:[
+        {emoji:"🔑", name:"Keychain"},
+        {emoji:"🧸", name:"Mini Plush"},
+        {emoji:"📱", name:"Phone Charm"},
+        {emoji:"🧢", name:"Cap"},
+        {emoji:"🧴", name:"Water Bottle"},
+      ]},
+      { tierName:"Cool", options:[
+        {emoji:"🧸", name:"Plush Toy (Small)"},
+        {emoji:"🎒", name:"Mini Backpack"},
+        {emoji:"🧩", name:"Toy Set"},
+        {emoji:"💡", name:"LED Desk Light"},
+        {emoji:"🎧", name:"Wired Earphones"},
+      ]},
+      { tierName:"Premium", options:[
+        {emoji:"🧸", name:"Plush Toy (Medium)"},
+        {emoji:"🔊", name:"Bluetooth Speaker"},
+        {emoji:"🎧", name:"Headphones"},
+        {emoji:"⌚", name:"Smartwatch (demo)"},
+        {emoji:"🎮", name:"Controller (demo)"},
+      ]},
+      { tierName:"Rare", options:[
+        {emoji:"🎁", name:"Mystery Box (demo)"},
+        {emoji:"📷", name:"Action Cam (demo)"},
+        {emoji:"🕹️", name:"Console Voucher (demo)"},
+        {emoji:"💳", name:"Gift Card Voucher (demo)"},
+        {emoji:"💵", name:"Cash Voucher (demo)"},
+      ]},
+    ];
+
+    function tierForLevel(level){
+      if (level <= 2) return 0;
+      if (level <= 4) return 1;
+      if (level <= 6) return 2;
+      if (level <= 9) return 3;
+      return 4;
+    }
+
+    function pickDistinct(arr, k){
+      const copy = arr.slice();
+      const out = [];
+      for (let i=0; i<k && copy.length>0; i++){
+        const idx = randInt(0, copy.length-1);
+        out.push(copy.splice(idx,1)[0]);
+      }
+      return out;
+    }
+
+    function getPrizePreview(level){
+      const tierIdx = tierForLevel(level);
+      return pickDistinct(PRIZE_TIERS[tierIdx].options, 3);
+    }
+
+    // -----------------------------
+    // Level difficulty configuration
+    // (Make this harsher/softer easily)
+    // -----------------------------
+    function getLevelConfig(level){
+      // Base scatter grows with level: harder to land accurately
+      const baseScatter = 14 + Math.min(32, level * 2.2);
+
+      // Default: majority wins, no accuracy requirement
+      let rule = "majority"; // "majority" | "all3"
+      let req = { minInside: 0, minInner: 0, minBull: 0 };
+
+      // Difficulty ramp:
+      if (level <= 2){
+        req = { minInside: 0, minInner: 0, minBull: 0 };
+      } else if (level <= 4){
+        req = { minInside: 2, minInner: 0, minBull: 0 };
+      } else if (level <= 6){
+        req = { minInside: 3, minInner: 1, minBull: 0 };
+      } else if (level <= 9){
+        req = { minInside: 3, minInner: 2, minBull: 0 };
+      } else if (level <= 12){
+        req = { minInside: 3, minInner: 2, minBull: 1 };
+      } else {
+        rule = "all3";
+        req = { minInside: 3, minInner: 2, minBull: 1 };
+      }
+
+      return { rule, req, baseScatter };
+    }
+
+    function getChallengeConfig(level){
+      // Must complete to regain attempts after failing 3 times
+      if (level <= 4){
+        return { title:"Clean Landing", desc:"Land ALL 3 coins inside the stone (outer ring counts).", req:{minInside:3, minInner:0, minBull:0} };
+      } else if (level <= 9){
+        return { title:"Inner Control", desc:"Land at least 2 coins in Inner ring or Bullseye.", req:{minInside:3, minInner:2, minBull:0} };
+      } else {
+        return { title:"Bullseye Shot", desc:"Hit at least 1 Bullseye (and all coins must stay on stone).", req:{minInside:3, minInner:2, minBull:1} };
+      }
+    }
+
+    // -----------------------------
+    // DOM
+    // -----------------------------
+    const $ = (id) => document.getElementById(id);
+
+    const fxCanvas = $("fx");
+    const flash = $("flash");
+
+    const phasePill = $("phasePill");
+    const modePill = $("modePill");
+    const turnPill = $("turnPill");
+
+    const menuBtn = $("menuBtn");
+    const resetBtn = $("resetBtn");
+    const tossBtn = $("tossBtn");
+    const cashoutBtn = $("cashoutBtn");
+
+    const betHeadsBtn = $("betHeads");
+    const betTailsBtn = $("betTails");
+
+    const activeName = $("activeName");
+    const levelText = $("levelText");
+    const streakText = $("streakText");
+    const hearts = $("hearts");
+    const securedPrize = $("securedPrize");
+    const nextPreview = $("nextPreview");
+
+    const toast = $("toast");
+    const msg = $("msg");
+    const submsg = $("submsg");
+    const hint = $("hint");
+    const playerLabel = $("playerLabel");
+
+    const ladderEl = $("ladder");
+
+    const soundSwitch = $("soundSwitch");
+    const fxSwitch = $("fxSwitch");
+
+    const sceneWrap = $("sceneWrap");
+    const stoneZone = $("stoneZone");
+    const hand = $("hand");
+    const reticle = $("reticle");
+    const aimLine = $("aimLine");
+
+    const wraps = [$("wrap0"), $("wrap1"), $("wrap2")];
+    const coins = [$("coin0"), $("coin1"), $("coin2")];
+
+    // Wizard
+    const wizardOverlay = $("wizardOverlay");
+    const wTitle = $("wTitle");
+    const wSubtitle = $("wSubtitle");
+    const wDots = $("wDots");
+    const wBack = $("wBack");
+    const wNext = $("wNext");
+    const wClose = $("wClose");
+    const wizardSteps = Array.from(document.querySelectorAll(".wizardStep"));
+
+    const modeSingle = $("modeSingle");
+    const modeMulti = $("modeMulti");
+    const p1Name = $("p1Name");
+    const p2Name = $("p2Name");
+
+    // Trial done
+    const trialDoneOverlay = $("trialDoneOverlay");
+    const startRealBtn = $("startRealBtn");
+
+    // Gate overlay
+    const gateOverlay = $("gateOverlay");
+    const gateTitle = $("gateTitle");
+    const gateSubtitle = $("gateSubtitle");
+    const gateNote = $("gateNote");
+    const challengeNote = $("challengeNote");
+    const stopBtn = $("stopBtn");
+    const continueBtn = $("continueBtn");
+
+    // Level overlay
+    const levelOverlay = $("levelOverlay");
+    const lvlTitle = $("lvlTitle");
+    const lvlSubtitle = $("lvlSubtitle");
+    const lvlNote = $("lvlNote");
+    const lvlContinue = $("lvlContinue");
+
+    // Cashout overlay
+    const cashoutOverlay = $("cashoutOverlay");
+    const cashoutSubtitle = $("cashoutSubtitle");
+    const cashoutNote = $("cashoutNote");
+    const cashoutRestart = $("cashoutRestart");
+
+    // -----------------------------
+    // Audio (simple synth clinks)
+    // -----------------------------
+    let audioCtx = null;
+    function ensureAudio(){
+      if (!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+    function beep(type="win"){
+      if (!state.soundOn) return;
+      try{
+        const ctx = ensureAudio();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "triangle";
+        const now = ctx.currentTime;
+
+        if (type==="win"){ o.frequency.setValueAtTime(660, now); o.frequency.exponentialRampToValueAtTime(980, now+0.09); }
+        if (type==="lose"){ o.frequency.setValueAtTime(220, now); o.frequency.exponentialRampToValueAtTime(140, now+0.12); }
+        if (type==="clink"){ o.frequency.setValueAtTime(520, now); o.frequency.exponentialRampToValueAtTime(360, now+0.06); }
+        if (type==="level"){ o.frequency.setValueAtTime(520, now); o.frequency.exponentialRampToValueAtTime(1040, now+0.18); }
+
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(0.22, now+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, now+0.20);
+
+        o.connect(g); g.connect(ctx.destination);
+        o.start(now);
+        o.stop(now+0.22);
+      }catch{}
+    }
+
+    // -----------------------------
+    // FX Canvas (ambient + bursts)
+    // -----------------------------
+    const FX = {
+      dpr: 1,
+      w: 0, h: 0,
+      ctx: null,
+      ambient: [],
+      particles: [],
+      enabled: true
+    };
+
+    function resizeFX(){
+      FX.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      FX.w = Math.floor(window.innerWidth * FX.dpr);
+      FX.h = Math.floor(window.innerHeight * FX.dpr);
+      fxCanvas.width = FX.w;
+      fxCanvas.height = FX.h;
+      fxCanvas.style.width = window.innerWidth + "px";
+      fxCanvas.style.height = window.innerHeight + "px";
+      FX.ctx = fxCanvas.getContext("2d");
+      // seed ambient
+      FX.ambient = [];
+      for (let i=0;i<38;i++){
+        FX.ambient.push({
+          x: randInt(0, FX.w),
+          y: randInt(0, FX.h),
+          r: randInt(1, 3) * FX.dpr,
+          vx: (randInt(-8,8)/100) * FX.dpr,
+          vy: (randInt(-16,-6)/100) * FX.dpr,
+          a: randInt(10, 30)/100
+        });
+      }
+    }
+
+    function fxSpawnBurst(x, y, kind="confetti"){
+      if (!FX.enabled) return;
+      const n = kind==="confetti" ? 80 : 28;
+      for (let i=0;i<n;i++){
+        const ang = (randUint32()/2**32) * Math.PI*2;
+        const sp = (kind==="confetti" ? randInt(18, 54) : randInt(10, 28)) * FX.dpr;
+        FX.particles.push({
+          x: x*FX.dpr,
+          y: y*FX.dpr,
+          vx: Math.cos(ang)*sp/10,
+          vy: Math.sin(ang)*sp/10 - (kind==="confetti"? 3*FX.dpr : 1.5*FX.dpr),
+          g: (kind==="confetti" ? 0.22 : 0.16) * FX.dpr,
+          life: kind==="confetti" ? randInt(60, 110) : randInt(35, 70),
+          r: kind==="confetti" ? randInt(2,4)*FX.dpr : randInt(1,3)*FX.dpr,
+          kind,
+          hue: randInt(160, 330),
+          rot: randInt(0, 360),
+          vr: randInt(-14, 14)/10
+        });
+      }
+    }
+
+    function fxSpark(x, y){
+      fxSpawnBurst(x, y, "spark");
+    }
+
+    function fxTick(){
+      const ctx = FX.ctx;
+      if (!ctx) return;
+
+      ctx.clearRect(0,0,FX.w,FX.h);
+
+      // ambient glow dots
+      if (FX.enabled){
+        for (const a of FX.ambient){
+          a.x += a.vx; a.y += a.vy;
+          if (a.y < -20) { a.y = FX.h + 20; a.x = randInt(0, FX.w); }
+          if (a.x < -20) a.x = FX.w + 20;
+          if (a.x > FX.w + 20) a.x = -20;
+
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255,255,255,${a.a})`;
+          ctx.arc(a.x, a.y, a.r, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+
+      // particles
+      for (let i=FX.particles.length-1;i>=0;i--){
+        const p = FX.particles[i];
+        p.life -= 1;
+        p.vy += p.g;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+
+        const alpha = Math.max(0, Math.min(1, p.life/80));
+
+        if (p.kind==="confetti"){
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot * Math.PI/180);
+          ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${alpha})`;
+          ctx.fillRect(-p.r*1.4, -p.r*0.9, p.r*2.8, p.r*1.8);
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255,210,120,${alpha*0.8})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+          ctx.fill();
+        }
+
+        if (p.life <= 0 || p.y > FX.h + 100){
+          FX.particles.splice(i,1);
+        }
+      }
+
+      requestAnimationFrame(fxTick);
+    }
+
+    // -----------------------------
+    // Game state
+    // -----------------------------
+    const state = {
+      mode: "single",          // single | multi
+      phase: "menu",           // menu | trial | real | gate | challengeReady | cashout
+      tossing: false,
+      currentPlayer: 0,
+      soundOn: false,
+      fxOn: true,
+
+      // aim
+      aim: { has:false, targetX:0, targetY:0, power:0.55, control:0.9 },
+
+      players: [
+        { name:"Player 1", bet:"heads", level:1, attempts:3, maxAttempts:3, secured:null, securedLevel:0, preview:getPrizePreview(1), trialLeft:0 },
+        { name:"Player 2", bet:"heads", level:1, attempts:3, maxAttempts:3, secured:null, securedLevel:0, preview:getPrizePreview(1), trialLeft:0 }
+      ],
+
+      // challenge gate
+      challenge: { active:false, config:null }
+    };
+
+    function active(){ return state.players[state.currentPlayer]; }
+
+    // -----------------------------
+    // UI helpers
+    // -----------------------------
+    function setToast(t){ toast.textContent = t; }
+
+    function showFlash(){
+      flash.classList.remove("play");
+      void flash.offsetWidth;
+      flash.classList.add("play");
+    }
+
+    function shakeScene(){
+      sceneWrap.classList.remove("shake");
+      void sceneWrap.offsetWidth;
+      sceneWrap.classList.add("shake");
+    }
+
+    function updateHearts(){
+      const p = active();
+      hearts.innerHTML = "";
+      for (let i=0; i<p.maxAttempts; i++){
+        const h = document.createElement("div");
+        h.className = "heart" + (i < p.attempts ? " filled" : "");
+        hearts.appendChild(h);
+      }
+    }
+
+    function prizeText(prize){
+      if (!prize) return "None";
+      return `${prize.emoji} ${prize.name}`;
+    }
+
+    function updatePreviewText(){
+      const p = active();
+      const tierIdx = tierForLevel(p.level);
+      const tierName = PRIZE_TIERS[tierIdx].tierName;
+      // short preview in tag:
+      nextPreview.textContent = `${tierName} (x${p.preview.length})`;
+    }
+
+    function renderLadder(){
+      ladderEl.innerHTML = "";
+      // show 12 levels preview ladder
+      const maxLevelShown = 12;
+      const p = active();
+
+      for (let lvl=1; lvl<=maxLevelShown; lvl++){
+        const tierIdx = tierForLevel(lvl);
+        const tierName = PRIZE_TIERS[tierIdx].tierName;
+        const sample = PRIZE_TIERS[tierIdx].options[0];
+
+        const item = document.createElement("div");
+        item.className = "ladderItem";
+        if (lvl === p.level) item.classList.add("current");
+        if (lvl === p.securedLevel) item.classList.add("secured");
+
+        const left = document.createElement("div");
+        left.className = "left";
+        left.innerHTML = `<div class="lvl">Level ${lvl}</div><div class="name">${tierName} Tier</div>`;
+
+        const right = document.createElement("div");
+        right.className = "right";
+        right.innerHTML = `<span class="badge">${sample.emoji} e.g. ${sample.name}</span>`;
+
+        item.appendChild(left);
+        item.appendChild(right);
+        ladderEl.appendChild(item);
+      }
+    }
+
+    function render(){
+      const p = active();
+
+      phasePill.textContent = `Phase: ${state.phase === "menu" ? "Menu" : (state.phase === "trial" ? "Free Trial" : (state.phase === "real" ? "Real Game" : "Gate"))}`;
+      modePill.textContent = `Mode: ${state.mode === "single" ? "Single" : "Multiplayer"}`;
+      turnPill.textContent = (state.phase === "menu") ? "Turn: —" : `Turn: ${p.name}`;
+
+      activeName.textContent = p.name;
+      levelText.textContent = String(p.level);
+      streakText.textContent = String(p.level - 1);
+      playerLabel.textContent = p.name;
+
+      securedPrize.textContent = p.secured ? `${p.secured.emoji} ${p.secured.name}` : "None";
+      updatePreviewText();
+      updateHearts();
+
+      betHeadsBtn.classList.toggle("active", p.bet === "heads");
+      betTailsBtn.classList.toggle("active", p.bet === "tails");
+
+      // Enable play only in trial/real/challengeReady
+      const playable = (state.phase === "trial" || state.phase === "real" || state.phase === "challengeReady");
+      tossBtn.disabled = !playable || state.tossing;
+
+      cashoutBtn.disabled = !(state.phase === "real" && !!p.secured && !state.tossing);
+
+      renderLadder();
+
+      // hint
+      if (state.phase === "trial"){
+        hint.textContent = state.mode === "single"
+          ? `Trial tosses left: ${state.players[0].trialLeft}. No prizes in trial.`
+          : `Trial tosses left: P1 ${state.players[0].trialLeft} · P2 ${state.players[1].trialLeft}`;
+      } else if (state.phase === "real"){
+        const cfg = getLevelConfig(p.level);
+        hint.textContent = `Level ${p.level} win requires: ${cfg.rule.toUpperCase()} + landing (inside:${cfg.req.minInside}, inner:${cfg.req.minInner}, bull:${cfg.req.minBull})`;
+      } else if (state.phase === "challengeReady"){
+        hint.textContent = `CHALLENGE: ${state.challenge.config.title} — ${state.challenge.config.desc}`;
+      } else {
+        hint.textContent = "Difficulty increases every level: accuracy requirements + more scatter.";
+      }
+    }
+
+    // -----------------------------
+    // Aim & scene coords
+    // -----------------------------
+    function sceneRects(){
+      const sceneRect = sceneWrap.getBoundingClientRect();
+      const stoneRect = stoneZone.getBoundingClientRect();
+      return { sceneRect, stoneRect };
+    }
+
+    function stoneCenterInScene(){
+      const { sceneRect, stoneRect } = sceneRects();
+      return {
+        x: (stoneRect.left - sceneRect.left) + stoneRect.width/2,
+        y: (stoneRect.top - sceneRect.top) + stoneRect.height/2,
+        w: stoneRect.width,
+        h: stoneRect.height
+      };
+    }
+
+    function setAimFromDrag(dx, dy){
+      const sc = stoneCenterInScene();
+
+      const len = Math.hypot(dx, dy);
+      const power = clamp(len / 240, 0, 1);
+
+      // sweet spot ~0.65
+      const control = clamp(1 - Math.abs(power - 0.65) / 0.65, 0, 1);
+
+      const ox = clamp(dx, -220, 220) * 0.65;
+      const oy = clamp(dy, -220, 220) * 0.35;
+
+      let tx = sc.x + ox;
+      let ty = sc.y + oy;
+
+      // too low power => short, too high => overshoot
+      if (power < 0.20) ty += (0.20 - power) * 140;
+      if (power > 0.90) ty -= (power - 0.90) * 90;
+
+      // clamp to ellipse area
+      const rx = sc.w/2 * 0.95;
+      const ry = sc.h/2 * 0.82;
+      const dxE = (tx - sc.x), dyE = (ty - sc.y);
+      const norm = Math.sqrt((dxE*dxE)/(rx*rx) + (dyE*dyE)/(ry*ry));
+      if (norm > 1){
+        tx = sc.x + dxE / norm;
+        ty = sc.y + dyE / norm;
+      }
+
+      state.aim.has = true;
+      state.aim.targetX = tx;
+      state.aim.targetY = ty;
+      state.aim.power = power;
+      state.aim.control = control;
+
+      // reticle
+      reticle.style.left = `${tx}px`;
+      reticle.style.top = `${ty}px`;
+      reticle.classList.add("show");
+
+      // line from hand
+      const { sceneRect } = sceneRects();
+      const handX = sceneRect.width/2;
+      const handY = sceneRect.height - 70;
+      const lx = tx - handX;
+      const ly = ty - handY;
+      const ang = Math.atan2(ly, lx);
+      const width = clamp(Math.hypot(lx, ly), 40, 560);
+
+      aimLine.style.left = `${handX}px`;
+      aimLine.style.top = `${handY}px`;
+      aimLine.style.width = `${width}px`;
+      aimLine.style.transform = `rotate(${ang}rad)`;
+      aimLine.classList.add("show");
+    }
+
+    function clearAimUI(){
+      reticle.classList.remove("show");
+      aimLine.classList.remove("show");
+    }
+
+    // -----------------------------
+    // Zone scoring (rings)
+    // -----------------------------
+    function zoneFromPoint(x, y){
+      const sc = stoneCenterInScene();
+      const rx = sc.w/2 * 0.86;
+      const ry = sc.h/2 * 0.72;
+      const dx = x - sc.x;
+      const dy = y - sc.y;
+      const d = Math.sqrt((dx*dx)/(rx*rx) + (dy*dy)/(ry*ry)); // <=1 is inside stone ellipse
+
+      if (d <= 0.33) return { name:"Bullseye", inside:true, inner:true, bull:true };
+      if (d <= 0.66) return { name:"Inner", inside:true, inner:true, bull:false };
+      if (d <= 1.00) return { name:"Outer", inside:true, inner:false, bull:false };
+      return { name:"Edge", inside:false, inner:false, bull:false };
+    }
+
+    function countsFromZones(zs){
+      return {
+        inside: zs.filter(z => z.inside).length,
+        inner: zs.filter(z => z.inner).length,
+        bull: zs.filter(z => z.bull).length
+      };
+    }
+
+    function meetsReq(counts, req){
+      return (counts.inside >= req.minInside) && (counts.inner >= req.minInner) && (counts.bull >= req.minBull);
+    }
+
+    // -----------------------------
+    // Coin outcomes (Hantak-style 3 coins)
+    // -----------------------------
+    function outcomeSide(bits, rule){
+      const heads = bits.filter(b => b===0).length;
+      const tails = 3 - heads;
+
+      if (rule === "majority"){
+        return heads >= 2 ? "heads" : "tails";
+      }
+      // all3
+      if (heads === 3) return "heads";
+      if (tails === 3) return "tails";
+      return "none";
+    }
+
+    function setCoinRotations(bits){
+      for (let i=0; i<3; i++){
+        const isTails = bits[i] === 1;
+        const turns = randInt(6, 10);
+        const rot = turns * 360 + (isTails ? 180 : 0);
+        coins[i].style.setProperty("--rot", `${rot}deg`);
+      }
+    }
+
+    // -----------------------------
+    // Throw animation
+    // -----------------------------
+    async function animateThrow(bits, levelScatter){
+      const { sceneRect } = sceneRects();
+      const sc = stoneCenterInScene();
+
+      const startX = sceneRect.width / 2;
+      const startY = sceneRect.height - 70;
+
+      const baseX = state.aim.has ? state.aim.targetX : sc.x;
+      const baseY = state.aim.has ? state.aim.targetY : sc.y;
+
+      // Scatter: combines level base + aim control
+      const scatter = levelScatter + (1 - state.aim.control) * 55 + 12;
+      const spreads = [-40, 0, 40];
+
+      // landing points
+      const land = [];
+      for (let i=0; i<3; i++){
+        // uniform-ish in circle
+        const t = (randUint32()/2**32) * Math.PI * 2;
+        const r = Math.sqrt(randUint32()/2**32) * scatter;
+        const jx = Math.cos(t)*r;
+        const jy = Math.sin(t)*r;
+
+        land.push({
+          x: baseX + jx + spreads[i]*0.12,
+          y: baseY + jy + randInt(-8, 8)
+        });
+      }
+
+      // hand push
+      hand.classList.remove("throwing"); void hand.offsetWidth; hand.classList.add("throwing");
+
+      // initial coin positions
+      for (let i=0; i<3; i++){
+        wraps[i].style.transform = `translate3d(${startX + spreads[i]}px, ${startY}px, 0) translate(-50%,-50%) scale(1.35)`;
+      }
+
+      setCoinRotations(bits);
+
+      // spin stagger
+      const delays = [0, 90, 160];
+      for (let i=0; i<3; i++){
+        coins[i].style.setProperty("--delay", `${delays[i]}ms`);
+        coins[i].classList.remove("spinning");
+        void coins[i].offsetWidth;
+        coins[i].classList.add("spinning");
+      }
+
+      const arc = 120 + state.aim.power * 90;
+
+      const anims = wraps.map((w, i) => {
+        const end = land[i];
+        const midX = (startX + end.x)/2 + randInt(-25, 25);
+        const midY = Math.min(startY, end.y) - arc + randInt(-12, 12);
+
+        return w.animate([
+          { transform: `translate3d(${startX + spreads[i]}px, ${startY}px, 0) translate(-50%,-50%) scale(1.35)` },
+          { transform: `translate3d(${midX}px, ${midY}px, 0) translate(-50%,-50%) scale(1.10)` },
+          { transform: `translate3d(${end.x}px, ${end.y}px, 0) translate(-50%,-50%) scale(0.90)` }
+        ], { duration: 920, delay: delays[i], easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" });
+      });
+
+      await Promise.all(anims.map(a => a.finished.catch(()=>{})));
+
+      // clink + sparks
+      beep("clink");
+      const rect = sceneWrap.getBoundingClientRect();
+      land.forEach(pt => {
+        fxSpark(rect.left + pt.x, rect.top + pt.y);
+      });
+
+      return land;
+    }
+
+    // -----------------------------
+    // Game flow
+    // -----------------------------
+    function startMenu(){
+      state.phase = "menu";
+      state.tossing = false;
+      state.currentPlayer = 0;
+      state.challenge.active = false;
+      state.challenge.config = null;
+
+      // reset players
+      for (let i=0;i<2;i++){
+        state.players[i].bet = "heads";
+        state.players[i].level = 1;
+        state.players[i].attempts = 3;
+        state.players[i].maxAttempts = 3;
+        state.players[i].secured = null;
+        state.players[i].securedLevel = 0;
+        state.players[i].preview = getPrizePreview(1);
+        state.players[i].trialLeft = 0;
+      }
+
+      msg.textContent = "Open Instructions to begin the step-by-step tutorial.";
+      submsg.textContent = "Drag in the scene to aim. Release to toss.";
+      setToast("Start the tutorial, then the free trial.");
+      render();
+    }
+
+    function startTrial(){
+      // trial counts
+      if (state.mode === "single"){
+        state.players[0].trialLeft = 3;
+        state.players[1].trialLeft = 0;
+      } else {
+        state.players[0].trialLeft = 2;
+        state.players[1].trialLeft = 2;
+      }
+
+      state.phase = "trial";
+      state.currentPlayer = 0;
+
+      msg.textContent = "Free Trial: practice aiming (no prizes yet).";
+      submsg.textContent = "Drag to aim. Release to toss.";
+      setToast("Trial started.");
+      render();
+    }
+
+    function trialFinished(){
+      if (state.mode === "single") return state.players[0].trialLeft <= 0;
+      return (state.players[0].trialLeft <= 0 && state.players[1].trialLeft <= 0);
+    }
+
+    function startReal(){
+      // reset run but keep names/mode
+      for (let i=0;i<2;i++){
+        state.players[i].bet = "heads";
+        state.players[i].level = 1;
+        state.players[i].attempts = 3;
+        state.players[i].maxAttempts = 3;
+        state.players[i].secured = null;
+        state.players[i].securedLevel = 0;
+        state.players[i].preview = getPrizePreview(1);
+      }
+      state.phase = "real";
+      state.currentPlayer = 0;
+      state.challenge.active = false;
+      state.challenge.config = null;
+
+      msg.textContent = "Real Game: Level 1. Call Heads or Tails.";
+      submsg.textContent = "Win to level up. Miss 3 times → Stop & Claim or Challenge Gate.";
+      setToast("Real game started.");
+      render();
+    }
+
+    function showGate(){
+      const p = active();
+      state.phase = "gate";
+      const cfg = getChallengeConfig(p.level);
+
+      gateTitle.textContent = `Out of attempts (Level ${p.level})`;
+      gateSubtitle.textContent = `Choose to stop or pass a challenge to continue.`;
+      gateNote.innerHTML = `<b>Secured prize:</b> ${p.secured ? prizeText(p.secured) : "None yet"}<br/><b>Tip:</b> You can stop now to keep it.`;
+      challengeNote.innerHTML = `<b>Challenge Gate:</b> <span style="color:rgba(255,255,255,.88)">${cfg.title}</span><br/>${cfg.desc}`;
+
+      gateOverlay.classList.add("show");
+      render();
+    }
+
+    function beginChallenge(){
+      const p = active();
+      state.challenge.active = true;
+      state.challenge.config = getChallengeConfig(p.level);
+      state.phase = "challengeReady";
+      gateOverlay.classList.remove("show");
+
+      msg.textContent = `CHALLENGE: ${state.challenge.config.title}`;
+      submsg.textContent = state.challenge.config.desc;
+      setToast("Aim carefully. This toss decides if you continue.");
+      render();
+    }
+
+    function levelUp(prizeWon){
+      const p = active();
+      // secure prize
+      p.secured = prizeWon;
+      p.securedLevel = p.level;
+
+      // advance
+      p.level += 1;
+      p.attempts = p.maxAttempts;
+      p.preview = getPrizePreview(p.level);
+
+      // fx
+      showFlash();
+      const rect = stoneZone.getBoundingClientRect();
+      fxSpawnBurst(rect.left + rect.width/2, rect.top + rect.height/2, "confetti");
+      beep("level");
+
+      lvlTitle.textContent = `Level Up!`;
+      lvlSubtitle.textContent = `You secured: ${prizeText(prizeWon)}`;
+      lvlNote.innerHTML = `<b>Next Level:</b> ${p.level}<br/>Attempts reset to <b>${p.maxAttempts}</b>.<br/><b>Difficulty</b> increased.`;
+      levelOverlay.classList.add("show");
+
+      render();
+    }
+
+    function cashOut(reason="You chose to stop."){
+      const p = active();
+      state.phase = "cashout";
+      gateOverlay.classList.remove("show");
+      levelOverlay.classList.remove("show");
+
+      cashoutSubtitle.textContent = reason;
+      cashoutNote.innerHTML = `
+        <b>Player:</b> ${p.name}<br/>
+        <b>Highest secured level:</b> ${p.securedLevel || 0}<br/>
+        <b>Claimed prize:</b> ${p.secured ? prizeText(p.secured) : "None"}<br/><br/>
+        You can press Play Again to restart from Level 1.
+      `;
+      cashoutOverlay.classList.add("show");
+      render();
+    }
+
+    // -----------------------------
+    // Main toss action
+    // -----------------------------
+    async function doToss(){
+      if (state.tossing) return;
+      if (!(state.phase === "trial" || state.phase === "real" || state.phase === "challengeReady")) return;
+
+      state.tossing = true;
+      render();
+
+      const p = active();
+
+      clearAimUI();
+
+      const cfg = getLevelConfig(p.level);
+      const bits = [randBit(), randBit(), randBit()];
+
+      msg.textContent = `${p.name} tosses…`;
+      submsg.textContent = (state.phase === "challengeReady")
+        ? `Challenge: ${state.challenge.config.title}`
+        : `Level ${p.level}: call ${p.bet.toUpperCase()} · Rule ${cfg.rule.toUpperCase()}`;
+
+      const land = await animateThrow(bits, cfg.baseScatter);
+
+      const outcome = outcomeSide(bits, (state.phase === "challengeReady") ? "majority" : cfg.rule);
+
+      // zones + counts
+      const zones = land.map(pt => zoneFromPoint(pt.x, pt.y));
+      const counts = countsFromZones(zones);
+
+      // Evaluate:
+      let success = false;
+
+      if (state.phase === "challengeReady"){
+        const req = state.challenge.config.req;
+        success = meetsReq(counts, req);
+      } else {
+        const req = cfg.req;
+        const landingOK = meetsReq(counts, req);
+        success = (outcome === p.bet) && landingOK;
+      }
+
+      // Resolve outcome
+      if (state.phase === "trial"){
+        p.trialLeft = Math.max(0, p.trialLeft - 1);
+        if (success){
+          beep("win");
+          showFlash();
+          const rect = stoneZone.getBoundingClientRect();
+          fxSpawnBurst(rect.left + rect.width/2, rect.top + rect.height/2, "confetti");
+          msg.textContent = `TRIAL: Correct call! (${outcome.toUpperCase()})`;
+        } else {
+          beep("lose");
+          shakeScene();
+          msg.textContent = `TRIAL: Not this time. (${outcome.toUpperCase()})`;
+        }
+        submsg.textContent = `Landing: inside ${counts.inside}/3 · inner ${counts.inner}/3 · bull ${counts.bull}/3`;
+
+        // switch turns in multiplayer
+        if (state.mode === "multi"){
+          state.currentPlayer = 1 - state.currentPlayer;
+        }
+
+        if (trialFinished()){
+          trialDoneOverlay.classList.add("show");
+          setToast("Trial complete. Start the real game.");
+        } else {
+          setToast("Trial toss done. Keep practicing.");
+        }
+
+      } else if (state.phase === "challengeReady"){
+        if (success){
+          beep("win");
+          showFlash();
+          const rect = stoneZone.getBoundingClientRect();
+          fxSpawnBurst(rect.left + rect.width/2, rect.top + rect.height/2, "confetti");
+          msg.textContent = `CHALLENGE PASSED ✅`;
+          submsg.textContent = `You earned back attempts. (inside ${counts.inside}/3 · inner ${counts.inner}/3 · bull ${counts.bull}/3)`;
+          setToast("Challenge passed! Attempts restored.");
+
+          p.attempts = p.maxAttempts;
+          state.challenge.active = false;
+          state.challenge.config = null;
+          state.phase = "real";
+
+        } else {
+          beep("lose");
+          shakeScene();
+          msg.textContent = `CHALLENGE FAILED ❌`;
+          submsg.textContent = `You must stop. (inside ${counts.inside}/3 · inner ${counts.inner}/3 · bull ${counts.bull}/3)`;
+          setToast("Challenge failed. You must claim your secured prize.");
+          // forced cashout
+          cashOut("Challenge failed. You claimed your secured prize.");
+        }
+
+      } else {
+        // REAL
+        if (success){
+          beep("win");
+          // pick prize from preview of THIS level completion
+          const wonPrize = p.preview[randInt(0, p.preview.length-1)];
+          msg.textContent = `WIN ✅ ${outcome.toUpperCase()} | Level cleared!`;
+          submsg.textContent = `Landing: inside ${counts.inside}/3 · inner ${counts.inner}/3 · bull ${counts.bull}/3`;
+          setToast("You won the level!");
+          levelUp(wonPrize);
+
+        } else {
+          beep("lose");
+          shakeScene();
+
+          p.attempts = Math.max(0, p.attempts - 1);
+
+          const why = (outcome !== p.bet)
+            ? `Wrong call (${outcome.toUpperCase()})`
+            : `Landing requirement not met`;
+
+          msg.textContent = `MISS ❌ ${why}`;
+          submsg.textContent = `Landing: inside ${counts.inside}/3 · inner ${counts.inner}/3 · bull ${counts.bull}/3 · Attempts left: ${p.attempts}`;
+          setToast("Try again.");
+
+          if (p.attempts <= 0){
+            showGate();
+          } else {
+            // multiplayer: pass turn
+            if (state.mode === "multi"){
+              state.currentPlayer = 1 - state.currentPlayer;
+            }
+          }
+        }
+      }
+
+      state.tossing = false;
+      render();
+    }
+
+    // -----------------------------
+    // Drag-to-aim + release-to-toss
+    // -----------------------------
+    const aimState = { dragging:false, startX:0, startY:0, lastX:0, lastY:0 };
+
+    function canPlayNow(){
+      return (state.phase === "trial" || state.phase === "real" || state.phase === "challengeReady") && !state.tossing;
+    }
+
+    sceneWrap.addEventListener("pointerdown", (e) => {
+      if (!canPlayNow()) return;
+      sceneWrap.setPointerCapture(e.pointerId);
+      aimState.dragging = true;
+
+      const rect = sceneWrap.getBoundingClientRect();
+      aimState.startX = e.clientX - rect.left;
+      aimState.startY = e.clientY - rect.top;
+      aimState.lastX = aimState.startX;
+      aimState.lastY = aimState.startY;
+
+      setAimFromDrag(0,0);
+      render();
+    });
+
+    sceneWrap.addEventListener("pointermove", (e) => {
+      if (!aimState.dragging) return;
+      const rect = sceneWrap.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      aimState.lastX = x;
+      aimState.lastY = y;
+
+      setAimFromDrag(x - aimState.startX, y - aimState.startY);
+      render();
+    });
+
+    sceneWrap.addEventListener("pointerup", async () => {
+      if (!aimState.dragging) return;
+      aimState.dragging = false;
+
+      const dx = aimState.lastX - aimState.startX;
+      const dy = aimState.lastY - aimState.startY;
+      const moved = Math.hypot(dx, dy);
+
+      // if drag is meaningful, auto-toss
+      if (moved > 24 && canPlayNow()){
+        await doToss();
+      } else {
+        clearAimUI();
+      }
+    });
+
+    sceneWrap.addEventListener("pointercancel", () => {
+      aimState.dragging = false;
+      clearAimUI();
+    });
+
+    // -----------------------------
+    // Wizard (step-by-step)
+    // -----------------------------
+    let wIndex = 0;
+    function wShow(idx){
+      wIndex = clamp(idx, 0, wizardSteps.length-1);
+      wizardSteps.forEach((s,i)=> s.classList.toggle("show", i===wIndex));
+
+      // dots
+      wDots.innerHTML = "";
+      for (let i=0;i<wizardSteps.length;i++){
+        const d = document.createElement("div");
+        d.className = "dot" + (i===wIndex ? " on" : "");
+        wDots.appendChild(d);
+      }
+
+      wBack.disabled = (wIndex === 0);
+      wNext.textContent = (wIndex === wizardSteps.length-1) ? "Agree & Start Trial" : "Agree & Next";
+    }
+
+    function applyWizardSettings(){
+      state.mode = modeSingle.classList.contains("active") ? "single" : "multi";
+      state.players[0].name = (p1Name.value || "Player 1").trim();
+      state.players[1].name = (p2Name.value || "Player 2").trim();
+    }
+
+    wBack.addEventListener("click", () => wShow(wIndex - 1));
+    wNext.addEventListener("click", () => {
+      if (wIndex < wizardSteps.length-1){
+        wShow(wIndex + 1);
+      } else {
+        applyWizardSettings();
+        wizardOverlay.classList.remove("show");
+        startTrial();
+      }
+    });
+    wClose.addEventListener("click", () => wizardOverlay.classList.remove("show"));
+
+    menuBtn.addEventListener("click", () => {
+      wizardOverlay.classList.add("show");
+      wShow(wIndex);
+    });
+
+    // mode toggle inside wizard
+    modeSingle.addEventListener("click", () => {
+      modeSingle.classList.add("active");
+      modeMulti.classList.remove("active");
+    });
+    modeMulti.addEventListener("click", () => {
+      modeMulti.classList.add("active");
+      modeSingle.classList.remove("active");
+    });
+
+    // -----------------------------
+    // Gate actions
+    // -----------------------------
+    stopBtn.addEventListener("click", () => {
+      gateOverlay.classList.remove("show");
+      cashOut("You stopped and claimed your secured prize.");
+    });
+    continueBtn.addEventListener("click", () => beginChallenge());
+
+    // -----------------------------
+    // Other overlays
+    // -----------------------------
+    startRealBtn.addEventListener("click", () => {
+      trialDoneOverlay.classList.remove("show");
+      startReal();
+    });
+
+    lvlContinue.addEventListener("click", () => {
+      levelOverlay.classList.remove("show");
+      // multiplayer: pass turn after a win
+      if (state.mode === "multi"){
+        state.currentPlayer = 1 - state.currentPlayer;
+      }
+      msg.textContent = `Level ${active().level}: Call Heads or Tails.`;
+      submsg.textContent = "Drag to aim. Release to toss.";
+      setToast("Next level started.");
+      render();
+    });
+
+    cashoutRestart.addEventListener("click", () => {
+      cashoutOverlay.classList.remove("show");
+      startReal();
+    });
+
+    // -----------------------------
+    // Controls
+    // -----------------------------
+    betHeadsBtn.addEventListener("click", () => {
+      active().bet = "heads";
+      render();
+    });
+    betTailsBtn.addEventListener("click", () => {
+      active().bet = "tails";
+      render();
+    });
+
+    tossBtn.addEventListener("click", doToss);
+
+    resetBtn.addEventListener("click", () => {
+      // back to menu/tutorial
+      gateOverlay.classList.remove("show");
+      trialDoneOverlay.classList.remove("show");
+      levelOverlay.classList.remove("show");
+      cashoutOverlay.classList.remove("show");
+      wizardOverlay.classList.add("show");
+      wShow(0);
+      startMenu();
+    });
+
+    cashoutBtn.addEventListener("click", () => {
+      if (state.phase === "real" && active().secured){
+        cashOut("You chose to Stop & Claim.");
+      }
+    });
+
+    // -----------------------------
+    // Switches (sound / fx)
+    // -----------------------------
+    function setSwitch(el, on){
+      el.classList.toggle("on", on);
+      el.setAttribute("aria-checked", on ? "true" : "false");
+    }
+    setSwitch(soundSwitch, state.soundOn);
+    setSwitch(fxSwitch, state.fxOn);
+
+    soundSwitch.addEventListener("click", async () => {
+      state.soundOn = !state.soundOn;
+      setSwitch(soundSwitch, state.soundOn);
+      if (state.soundOn){
+        try{ ensureAudio(); await audioCtx.resume(); beep("win"); }catch{}
+      }
+      setToast(state.soundOn ? "Sound FX enabled." : "Sound FX disabled.");
+    });
+
+    fxSwitch.addEventListener("click", () => {
+      state.fxOn = !state.fxOn;
+      FX.enabled = state.fxOn;
+      setSwitch(fxSwitch, state.fxOn);
+      setToast(state.fxOn ? "Extra particles enabled." : "Extra particles disabled.");
+    });
+
+    // -----------------------------
+    // Init
+    // -----------------------------
+    window.addEventListener("resize", resizeFX);
+    resizeFX();
+    fxTick();
+
+    // Start in menu/tutorial
+    wShow(0);
+    startMenu();
+  </script>
+</body>
+</html>
